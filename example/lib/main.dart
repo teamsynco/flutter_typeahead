@@ -77,6 +77,8 @@ class ExampleTypeAhead extends StatelessWidget
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: maybeReversed([
+              // The suggestions box automatically respects safe area insets
+              // and will stay within the visible area of the screen
               TypeAheadField<Product>(
                 direction: settings.direction.value,
                 controller: controller,

@@ -137,6 +137,18 @@ TypeAheadField(
 );
 ```
 
+### Safe Area Handling
+
+The suggestions box automatically respects safe area insets to ensure it stays within the visible area of the screen. This is particularly important on devices with notches, status bars, or home indicators.
+
+The suggestions box will:
+- Avoid overlapping with the status bar area
+- Respect bottom safe area (e.g., home indicator on newer iPhones)
+- Stay within the left and right safe areas
+- Automatically adjust its position and size to fit within the safe area
+
+This behavior is built into the package and requires no additional configuration. The suggestions box automatically uses the safe area insets from `MediaQuery.paddingOf(context)` to constrain its positioning and size, ensuring it never goes into unsafe areas. The implementation follows the same approach as Flutter's `SafeArea` widget, applying padding constraints directly to keep the suggestions box within the safe area bounds.
+
 ### Customizing the loading, error and empty message
 
 You can use the `loadingBuilder`, `errorBuilder` and `emptyBuilder` to

@@ -69,8 +69,7 @@ class _FloaterTarget extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(
-      BuildContext context, _RenderFloaterTarget renderObject) {
+  void updateRenderObject(BuildContext context, _RenderFloaterTarget renderObject) {
     renderObject.controller = link;
   }
 
@@ -386,14 +385,11 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
         widget.padding,
       ];
 
-  ({Size size, Offset offset, EdgeInsets viewPadding}) getOverlayConstraints(
-      OverlayState overlay) {
-    final RenderBox? overlayBox =
-        overlay.context.findRenderObject() as RenderBox?;
+  ({Size size, Offset offset}) getOverlayConstraints(OverlayState overlay) {
+    final RenderBox? overlayBox = overlay.context.findRenderObject() as RenderBox?;
 
     Offset overlayOffset = Offset.zero;
     Size overlaySize = Size.zero;
-    final EdgeInsets viewPadding = MediaQuery.of(overlay.context).padding;
 
     if (overlayBox != null && overlayBox.hasSize) {
       bool canComputeConstraints = true;
@@ -415,7 +411,6 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
     return (
       size: overlaySize,
       offset: overlayOffset,
-      viewPadding: viewPadding,
     );
   }
 
@@ -425,42 +420,42 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
     Offset offset,
     Size size,
     FloaterAnchor anchor,
+    EdgeInsets viewPadding,
   ) =>
       switch (direction) {
         AxisDirection.down => Size(
-            space.width,
+            space.width - viewPadding.left - viewPadding.right,
             switch ((anchor.top, anchor.bottom)) {
               (true, true) => size.height,
-              (true, false) => space.height - offset.dy.abs(),
+              (true, false) => space.height - offset.dy.abs() - viewPadding.bottom,
               (false, true) => size.height * 2,
-              (false, false) => space.height - offset.dy.abs(),
+              (false, false) => space.height - offset.dy.abs() - viewPadding.bottom,
             }),
         AxisDirection.up => Size(
-            space.width,
+            space.width - viewPadding.left - viewPadding.right,
             switch ((anchor.top, anchor.bottom)) {
               (true, true) => size.height,
-              (true, false) => offset.dy + size.height,
+              (true, false) => offset.dy + size.height - viewPadding.top,
               (false, true) => size.height * 2,
-              (false, false) => offset.dy + size.height,
+              (false, false) => offset.dy + size.height - viewPadding.top,
             }),
         AxisDirection.left => Size(
             switch ((anchor.top, anchor.bottom)) {
-              (true, true) => min(size.width, offset.dx),
-              (true, false) => offset.dx,
-              (false, true) => min(size.width * 2, offset.dx + size.width),
-              (false, false) => offset.dx + size.width,
+              (true, true) => min(size.width, offset.dx - viewPadding.left),
+              (true, false) => offset.dx - viewPadding.left,
+              (false, true) => min(size.width * 2, offset.dx + size.width - viewPadding.left),
+              (false, false) => offset.dx + size.width - viewPadding.left,
             },
-            space.height,
+            space.height - viewPadding.top - viewPadding.bottom,
           ),
         AxisDirection.right => Size(
             switch ((anchor.top, anchor.bottom)) {
-              (true, true) => min(size.width, space.width - offset.dx),
-              (true, false) => space.width - offset.dx,
-              (false, true) =>
-                min(size.width * 2, space.width - offset.dx + size.width),
-              (false, false) => space.width - offset.dx + size.width,
+              (true, true) => min(size.width, space.width - offset.dx - viewPadding.right),
+              (true, false) => space.width - offset.dx - viewPadding.right,
+              (false, true) => min(size.width * 2, space.width - offset.dx + size.width - viewPadding.right),
+              (false, false) => space.width - offset.dx + size.width - viewPadding.right,
             },
-            space.height,
+            space.height - viewPadding.top - viewPadding.bottom,
           ),
       };
 
@@ -470,33 +465,28 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
     Offset offset,
     Size size,
     FloaterAnchor anchor,
+    EdgeInsets viewPadding,
   ) =>
       switch (direction) {
         AxisDirection.down => EdgeInsets.only(
-            top: (anchor.top ? size.height : 0) + offset.dy,
-            left: anchor.left ? offset.dx : 0,
-            right: anchor.right ? space.width - offset.dx - size.width : 0,
+            top: (anchor.top ? size.height : 0) + offset.dy + viewPadding.top,
+            left: anchor.left ? offset.dx + viewPadding.left : viewPadding.left,
+            right: anchor.right ? space.width - offset.dx - size.width + viewPadding.right : viewPadding.right,
           ),
         AxisDirection.up => EdgeInsets.only(
-            bottom: (anchor.top ? size.height : 0) +
-                space.height -
-                offset.dy -
-                size.height,
-            left: anchor.left ? offset.dx : 0,
-            right: anchor.right ? space.width - offset.dx - size.width : 0,
+            bottom: (anchor.top ? size.height : 0) + space.height - offset.dy - size.height + viewPadding.bottom,
+            left: anchor.left ? offset.dx + viewPadding.left : viewPadding.left,
+            right: anchor.right ? space.width - offset.dx - size.width + viewPadding.right : viewPadding.right,
           ),
         AxisDirection.left => EdgeInsets.only(
-            right: (anchor.top ? size.width : 0) +
-                space.width -
-                offset.dx -
-                size.width,
-            top: anchor.left ? offset.dy : 0,
-            bottom: anchor.right ? space.height - offset.dy - size.height : 0,
+            right: (anchor.top ? size.width : 0) + space.width - offset.dx - size.width + viewPadding.right,
+            top: anchor.left ? offset.dy + viewPadding.top : viewPadding.top,
+            bottom: anchor.right ? space.height - offset.dy - size.height + viewPadding.bottom : viewPadding.bottom,
           ),
         AxisDirection.right => EdgeInsets.only(
-            left: (anchor.top ? size.width : 0) + offset.dx,
-            top: anchor.left ? offset.dy : 0,
-            bottom: anchor.right ? space.height - offset.dy - size.height : 0,
+            left: (anchor.top ? size.width : 0) + offset.dx + viewPadding.left,
+            top: anchor.left ? offset.dy + viewPadding.top : viewPadding.top,
+            bottom: anchor.right ? space.height - offset.dy - size.height + viewPadding.bottom : viewPadding.bottom,
           ),
       }
           .positive();
@@ -543,22 +533,23 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
     Offset offset,
     Size size,
     FloaterAnchor anchor,
+    EdgeInsets viewPadding,
   ) =>
       switch (direction) {
         AxisDirection.down => Offset(
             ((space.width - offset.dx - size.width) - offset.dx) / 2,
-            -offset.dy,
+            -offset.dy + viewPadding.top,
           ),
         AxisDirection.up => Offset(
             ((space.width - offset.dx - size.width) - offset.dx) / 2,
-            space.height - offset.dy - size.height,
+            space.height - offset.dy - size.height - viewPadding.bottom,
           ),
         AxisDirection.left => Offset(
-            offset.dx,
+            offset.dx + viewPadding.left,
             ((space.height - offset.dy - size.height) - offset.dy) / 2,
           ),
         AxisDirection.right => Offset(
-            -offset.dx,
+            -offset.dx - viewPadding.right,
             ((space.height - offset.dy - size.height) - offset.dy) / 2,
           ),
       };
@@ -572,9 +563,11 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
         builder: (context) {
           final (size: size, offset: linkOffset) = widget.link.value;
 
-          // TODO: use viewPadding
-          final (size: space, offset: overlayOffset, :viewPadding) =
-              getOverlayConstraints(Overlay.of(context));
+          // Get overlay constraints
+          final (size: space, offset: overlayOffset) = getOverlayConstraints(Overlay.of(context));
+
+          // Get safe area insets from the widget's context to ensure we have the correct values
+          final EdgeInsets safeAreaInsets = MediaQuery.paddingOf(context);
 
           Offset offset = linkOffset - overlayOffset;
           AxisDirection direction = widget.direction;
@@ -585,6 +578,7 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
             offset,
             size,
             widget.anchor,
+            safeAreaInsets,
           );
 
           EdgeInsets insets;
@@ -597,6 +591,7 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
               offset,
               size,
               widget.anchor,
+              safeAreaInsets,
             );
 
             if (maybeArea.height > size.height) {
@@ -610,6 +605,7 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
               offset,
               size,
               widget.anchor,
+              safeAreaInsets,
             );
           } else {
             insets = getDirectionInsets(
@@ -618,16 +614,17 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
               offset,
               size,
               widget.anchor,
+              safeAreaInsets,
             );
           }
 
+          // Constrain the area to respect safe area insets
           area = Size(
-            max(0, area.width),
-            max(0, area.height),
+            max(0, area.width - safeAreaInsets.left - safeAreaInsets.right),
+            max(0, area.height - safeAreaInsets.top - safeAreaInsets.bottom),
           );
 
           final (targetAnchor, followerAnchor) = getDirectionAnchors(direction);
-          // viewPadding = getDirectionPadding(direction, viewPadding);
 
           final padding = (insets +
                   getDirectionPadding(
@@ -652,24 +649,22 @@ class _FloaterState extends State<Floater> with WidgetsBindingObserver {
               offset,
               size,
               widget.anchor,
+              safeAreaInsets,
             ),
             child: Padding(
               padding: padding,
-              child: MediaQuery.removePadding(
-                context: context,
-                child: Align(
-                  alignment: followerAnchor,
-                  child: ConstrainedBox(
-                    constraints: constraints,
-                    child: _FloaterProvider(
-                      data: FloaterData(
-                        size: area,
-                        offset: offset,
-                        direction: widget.direction,
-                        effectiveDirection: direction,
-                      ),
-                      child: Builder(builder: widget.builder),
+              child: Align(
+                alignment: followerAnchor,
+                child: ConstrainedBox(
+                  constraints: constraints,
+                  child: _FloaterProvider(
+                    data: FloaterData(
+                      size: area,
+                      offset: offset,
+                      direction: widget.direction,
+                      effectiveDirection: direction,
                     ),
+                    child: Builder(builder: widget.builder),
                   ),
                 ),
               ),
